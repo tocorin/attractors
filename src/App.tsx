@@ -1,9 +1,10 @@
 import Controls from "./Controls";
+import Canvas from "./Canvas";
 
 function App(){
     return (
       <>
-        <div id="canvas-container"></div>
+        <Canvas />
         <Controls />
       </>
     );
