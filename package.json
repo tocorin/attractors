@@ -18,7 +18,8 @@
   "license": "MIT",
   "dependencies": {
     "react-dom": "^19.2.6",
-    "three": "^0.184.0"
+    "three": "^0.184.0",
+    "zustand": "^5.1.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",
