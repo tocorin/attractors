@@ -15,6 +15,27 @@ export default function Controls() {
 
         <label>ρ (rho):</label>
         <input type="number" id="rho" value="28" step="0.1" />
+
+        <h4>Сетки</h4>
+        <label>
+          <input type="checkbox" id="grid-xy" defaultChecked /> XY
+        </label>
+        <label>
+          <input type="checkbox" id="grid-yz" /> YZ
+        </label>
+        <label>
+          <input type="checkbox" id="grid-xz" /> XZ
+        </label>
+
+        <h4>Вид</h4>
+        <label htmlFor="animation-speed">Скорость анимации:</label>
+        <input type="number" id="animation-speed" value="2" step="0.5" min="0" />
+
+        <label htmlFor="particle-size">Размер частиц:</label>
+        <input type="number" id="particle-size" value="0.35" step="0.05" min="0.05" />
+
+        <label htmlFor="particle-count">Количество частиц:</label>
+        <input type="number" id="particle-count" value="100" step="10" min="0" />
       </div>
     );
 }
