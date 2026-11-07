@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import type { c3d, Trajectory, SystemParameters } from './types';
 import { rk4, getSystem } from './attractors';
+import { useSettingsStore } from './store';
 
 const COLORS = [
     0x0088ff, 0xff4444, 0x00ff88, 0xffaa00,
@@ -11,7 +12,6 @@ const COLORS = [
 
 const PARTICLE_SPEED = 2;
 const PARTICLES_PER_TRAJECTORY = 100;
-const showGridXY = true;
 
 function createTrajectoryLine(points: c3d[], color: number): THREE.Line {
     const geometry = new THREE.BufferGeometry();
@@ -77,14 +77,30 @@ export default function Canvas() {
         const axesHelper = new THREE.AxesHelper(30);
         scene.add(axesHelper);
 
-        // Грид по плоскости XY (серый, прозрачность 75%)
-        if (showGridXY) {
-            const gridHelper = new THREE.GridHelper(60, 60, 0x808080, 0x808080);
-            gridHelper.rotation.x = Math.PI / 2;
-            (gridHelper.material as THREE.Material).transparent = true;
-            (gridHelper.material as THREE.Material).opacity = 0.25;
-            scene.add(gridHelper);
-        }
+        // Гриды по плоскостям XY, YZ, XZ (серый, прозрачность 75%)
+        const createGrid = () => {
+            const grid = new THREE.GridHelper(60, 60, 0x808080, 0x808080);
+            (grid.material as THREE.Material).transparent = true;
+            (grid.material as THREE.Material).opacity = 0.25;
+            return grid;
+        };
+
+        // GridHelper по умолчанию лежит в плоскости XZ
+        const gridXY = createGrid();
+        gridXY.rotation.x = Math.PI / 2;
+        const gridYZ = createGrid();
+        gridYZ.rotation.z = Math.PI / 2;
+        const gridXZ = createGrid();
+
+        const grids: Record<string, THREE.GridHelper> = { xy: gridXY, yz: gridYZ, xz: gridXZ };
+        const syncGrids = (gridsState: Record<string, boolean>) => {
+            Object.entries(grids).forEach(([plane, grid]) => {
+                grid.visible = !!gridsState[plane];
+            });
+        };
+        syncGrids(useSettingsStore.getState().grids);
+        const unsubscribeGrids = useSettingsStore.subscribe((state) => syncGrids(state.grids));
+        scene.add(gridXY, gridYZ, gridXZ);
 
         // Свет
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -177,6 +193,7 @@ export default function Canvas() {
                 cancelAnimationFrame(animationId);
             }
             window.removeEventListener('resize', onWindowResize);
+            unsubscribeGrids();
             controls.dispose();
 
             trajectoryMeshes.forEach(mesh => {

@@ -1,6 +1,10 @@
 import React from "react";
+import { useSettingsStore, type GridPlane } from "./store";
 
 export default function Controls() {
+    const grids = useSettingsStore((state) => state.grids);
+    const toggleGrid = useSettingsStore((state) => state.toggleGrid);
+
     return (
       <div id="controls">
         <h3>🎛️ Ручки</h3>
@@ -17,15 +21,16 @@ export default function Controls() {
         <input type="number" id="rho" value="28" step="0.1" />
 
         <h4>Сетки</h4>
-        <label>
-          <input type="checkbox" id="grid-xy" defaultChecked /> XY
-        </label>
-        <label>
-          <input type="checkbox" id="grid-yz" /> YZ
-        </label>
-        <label>
-          <input type="checkbox" id="grid-xz" /> XZ
-        </label>
+        {(['xy', 'yz', 'xz'] as GridPlane[]).map((plane) => (
+          <label key={plane}>
+            <input
+              type="checkbox"
+              id={`grid-${plane}`}
+              checked={grids[plane]}
+              onChange={() => toggleGrid(plane)}
+            /> {plane.toUpperCase()}
+          </label>
+        ))}
 
         <h4>Вид</h4>
         <label htmlFor="animation-speed">Скорость анимации:</label>
