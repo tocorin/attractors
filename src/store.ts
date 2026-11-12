@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { SystemParameters } from './types';
-import { getSystemDefaults } from './attractors';
+import { getDefaultParams } from './attractors';
 
 export type GridPlane = 'xy' | 'yz' | 'xz';
 
@@ -23,12 +23,12 @@ const DEFAULT_SYSTEM = "lorenz";
 
 export const useSettingsStore = create<SettingsState>((set) => ({
     system: DEFAULT_SYSTEM,
-    params: getSystemDefaults(DEFAULT_SYSTEM),
+    params: getDefaultParams(DEFAULT_SYSTEM),
     grids: { xy: true, yz: false, xz: false },
     animationSpeed: 2,
     particleSize: 0.35,
     particleCount: 100,
-    setSystem: (system) => set({ system, params: getSystemDefaults(system) }),
+    setSystem: (system) => set({ system, params: getDefaultParams(system) }),
     setParam: (key, value) =>
         set((state) => ({ params: { ...state.params, [key]: value } })),
     toggleGrid: (plane) =>

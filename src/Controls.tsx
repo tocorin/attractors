@@ -1,5 +1,6 @@
 import React from "react";
 import { useSettingsStore, type GridPlane } from "./store";
+import { getParameterDescriptors } from "./attractors";
 
 export default function Controls() {
     const grids = useSettingsStore((state) => state.grids);
@@ -21,29 +22,22 @@ export default function Controls() {
           <option value="lorenz">Лоренц (хаос)</option>
           <option value="rossler">Рёсслер</option>
         </select>
-        <label>σ (sigma):</label>
-        <input
-          type="number"
-          id="sigma"
-          value={params.sigma ?? ""}
-          step="0.1"
-          onChange={(e) => {
-            const value = parseFloat(e.target.value);
-            if (!isNaN(value)) setParam("sigma", value);
-          }}
-        />
-
-        <label>ρ (rho):</label>
-        <input
-          type="number"
-          id="rho"
-          value={params.rho ?? ""}
-          step="0.1"
-          onChange={(e) => {
-            const value = parseFloat(e.target.value);
-            if (!isNaN(value)) setParam("rho", value);
-          }}
-        />
+        {getParameterDescriptors(system).map((p) => (
+          <React.Fragment key={p.key}>
+            <label htmlFor={`param-${p.key}`}>{p.label}:</label>
+            <input
+              type="number"
+              id={`param-${p.key}`}
+              value={params[p.key] ?? p.default}
+              step={p.step ?? 0.1}
+              min={p.min}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value);
+                if (!isNaN(value)) setParam(p.key, value);
+              }}
+            />
+          </React.Fragment>
+        ))}
 
         <h4>Сетки</h4>
         {(['xy', 'yz', 'xz'] as GridPlane[]).map((plane) => (

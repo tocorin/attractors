@@ -20,8 +20,23 @@ export interface SystemParameters {
 
 export type System = {
     name: string;
-    parameters: SystemParameters;
+    parameters: ParameterDescriptor[];
+    integration: IntegrationSettings;
+    initialConditions: c3d[];
     derivative: df;
+};
+
+export type ParameterDescriptor = {
+    key: string;
+    label: string;
+    default: number;
+    step?: number;
+    min?: number;
+};
+
+export type IntegrationSettings = {
+    timeSpan: number;
+    dt: number;
 };
 
 export type ParticleSettings = {

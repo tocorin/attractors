@@ -2,7 +2,8 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import type { c3d, Trajectory, SystemParameters } from './types';
-import { rk4, getSystem } from './attractors';
+import { rk4 } from './attractors';
+import { getSystemConfig, getDefaultParams } from './attractors';
 import { useSettingsStore } from './store';
 
 const COLORS = [
@@ -135,21 +136,17 @@ export default function Canvas() {
             particleTrajectoryIndices.length = 0;
         };
 
-        const buildTrajectories = (systemName: string, params: SystemParameters) => {
+        const buildTrajectories = (systemName: string, paramValues: SystemParameters) => {
             clearTrajectories();
 
-            const timeSpan = 100;
-            const dt = 0.01;
+            const config = getSystemConfig(systemName);
+            if (!config) {
+                return;
+            }
 
-            const derivativeFn = getSystem(systemName);
-
-            // Несколько начальных условий для наглядности
-            const initialConditions: c3d[] = [
-                [1, 1, 1],
-                [1.1, 1, 1],
-                [-5, 0, 10],
-                [5, 5, 5]
-            ];
+            const { derivative: derivativeFn, integration, initialConditions } = config;
+            const { timeSpan, dt } = integration;
+            const params = { ...getDefaultParams(systemName), ...paramValues };
 
             initialConditions.forEach((ic, idx) => {
                 const points = rk4(derivativeFn, ic, [0, timeSpan], dt, params);
