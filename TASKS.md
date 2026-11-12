@@ -1,6 +1,6 @@
 # Tasks
 
-t-1-wire simulation parameters to controls
+~~t-1-wire simulation parameters to controls~~
 Параметры интегрирования в buildTrajectories захардкожены (sigma=rho=beta=0.2, timeSpan=100, dt=0.01); поля σ/ρ в панели ни на что не влияют. Протащить параметры системы из Controls через стор в Canvas, в т.ч. дефолты для Лоренца (10, 28, 8/3).
 
 t-2-check trajectory scale vs grid and camera

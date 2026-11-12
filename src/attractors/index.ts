@@ -15,4 +15,8 @@ export function getSystem(name: string): df {
   }
 }
 
+export function getSystemDefaults(name: string): SystemParameters {
+  return { ...modules.find((m) => m.name === name)?.parameters };
+}
+
 export default modules;

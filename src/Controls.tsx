@@ -6,6 +6,8 @@ export default function Controls() {
     const toggleGrid = useSettingsStore((state) => state.toggleGrid);
     const system = useSettingsStore((state) => state.system);
     const setSystem = useSettingsStore((state) => state.setSystem);
+    const params = useSettingsStore((state) => state.params);
+    const setParam = useSettingsStore((state) => state.setParam);
 
     return (
       <div id="controls">
@@ -20,10 +22,28 @@ export default function Controls() {
           <option value="rossler">Рёсслер</option>
         </select>
         <label>σ (sigma):</label>
-        <input type="number" id="sigma" value="10" step="0.1" />
+        <input
+          type="number"
+          id="sigma"
+          value={params.sigma ?? ""}
+          step="0.1"
+          onChange={(e) => {
+            const value = parseFloat(e.target.value);
+            if (!isNaN(value)) setParam("sigma", value);
+          }}
+        />
 
         <label>ρ (rho):</label>
-        <input type="number" id="rho" value="28" step="0.1" />
+        <input
+          type="number"
+          id="rho"
+          value={params.rho ?? ""}
+          step="0.1"
+          onChange={(e) => {
+            const value = parseFloat(e.target.value);
+            if (!isNaN(value)) setParam("rho", value);
+          }}
+        />
 
         <h4>Сетки</h4>
         {(['xy', 'yz', 'xz'] as GridPlane[]).map((plane) => (

@@ -135,16 +135,12 @@ export default function Canvas() {
             particleTrajectoryIndices.length = 0;
         };
 
-        const buildTrajectories = (systemName: string) => {
+        const buildTrajectories = (systemName: string, params: SystemParameters) => {
             clearTrajectories();
 
-            const sigma = 0.2;
-            const rho = 0.2;
-            const beta = 0.2;
             const timeSpan = 100;
             const dt = 0.01;
 
-            const params: SystemParameters = { sigma, rho, beta };
             const derivativeFn = getSystem(systemName);
 
             // Несколько начальных условий для наглядности
@@ -179,10 +175,13 @@ export default function Canvas() {
             });
         };
 
-        buildTrajectories(useSettingsStore.getState().system);
+        buildTrajectories(
+            useSettingsStore.getState().system,
+            useSettingsStore.getState().params
+        );
         const unsubscribeSystem = useSettingsStore.subscribe((state, prevState) => {
-            if (state.system !== prevState.system) {
-                buildTrajectories(state.system);
+            if (state.system !== prevState.system || state.params !== prevState.params) {
+                buildTrajectories(state.system, state.params);
             }
         });
 
