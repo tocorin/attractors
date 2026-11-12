@@ -117,44 +117,72 @@ export default function Canvas() {
         const particleIndices: number[] = [];
         const particleTrajectoryIndices: number[] = [];
 
-        const systemName = "rossler";
-        const sigma = 0.2;
-        const rho = 0.2;
-        const beta = 0.2;
-        const timeSpan = 100;
-        const dt = 0.01;
+        const clearTrajectories = () => {
+            trajectoryMeshes.forEach(mesh => {
+                scene.remove(mesh);
+                mesh.geometry.dispose();
+                (mesh.material as THREE.Material).dispose();
+            });
+            particleMeshes.forEach(mesh => {
+                scene.remove(mesh);
+                mesh.geometry.dispose();
+                (mesh.material as THREE.Material).dispose();
+            });
+            trajectories.length = 0;
+            trajectoryMeshes.length = 0;
+            particleMeshes.length = 0;
+            particleIndices.length = 0;
+            particleTrajectoryIndices.length = 0;
+        };
 
-        const params: SystemParameters = { sigma, rho, beta };
-        const derivativeFn = getSystem(systemName);
+        const buildTrajectories = (systemName: string) => {
+            clearTrajectories();
 
-        // Несколько начальных условий для наглядности
-        const initialConditions: c3d[] = [
-            [1, 1, 1],
-            [1.1, 1, 1],
-            [-5, 0, 10],
-            [5, 5, 5]
-        ];
+            const sigma = 0.2;
+            const rho = 0.2;
+            const beta = 0.2;
+            const timeSpan = 100;
+            const dt = 0.01;
 
-        initialConditions.forEach((ic, idx) => {
-            const points = rk4(derivativeFn, ic, [0, timeSpan], dt, params);
-            const color = COLORS[idx % COLORS.length];
+            const params: SystemParameters = { sigma, rho, beta };
+            const derivativeFn = getSystem(systemName);
 
-            trajectories.push({ points, color, initial: ic });
+            // Несколько начальных условий для наглядности
+            const initialConditions: c3d[] = [
+                [1, 1, 1],
+                [1.1, 1, 1],
+                [-5, 0, 10],
+                [5, 5, 5]
+            ];
 
-            const line = createTrajectoryLine(points, color);
-            scene.add(line);
-            trajectoryMeshes.push(line);
+            initialConditions.forEach((ic, idx) => {
+                const points = rk4(derivativeFn, ic, [0, timeSpan], dt, params);
+                const color = COLORS[idx % COLORS.length];
 
-            for (let i = 0; i < PARTICLES_PER_TRAJECTORY; i++) {
-                const particle = createMovingParticle(color);
-                const randomFrame = Math.floor(Math.random() * points.length);
-                const point = points[randomFrame];
-                particle.position.set(point[0], point[1], point[2]);
+                trajectories.push({ points, color, initial: ic });
 
-                scene.add(particle);
-                particleMeshes.push(particle);
-                particleIndices.push(randomFrame);
-                particleTrajectoryIndices.push(idx);
+                const line = createTrajectoryLine(points, color);
+                scene.add(line);
+                trajectoryMeshes.push(line);
+
+                for (let i = 0; i < PARTICLES_PER_TRAJECTORY; i++) {
+                    const particle = createMovingParticle(color);
+                    const randomFrame = Math.floor(Math.random() * points.length);
+                    const point = points[randomFrame];
+                    particle.position.set(point[0], point[1], point[2]);
+
+                    scene.add(particle);
+                    particleMeshes.push(particle);
+                    particleIndices.push(randomFrame);
+                    particleTrajectoryIndices.push(idx);
+                }
+            });
+        };
+
+        buildTrajectories(useSettingsStore.getState().system);
+        const unsubscribeSystem = useSettingsStore.subscribe((state, prevState) => {
+            if (state.system !== prevState.system) {
+                buildTrajectories(state.system);
             }
         });
 
@@ -194,16 +222,10 @@ export default function Canvas() {
             }
             window.removeEventListener('resize', onWindowResize);
             unsubscribeGrids();
+            unsubscribeSystem();
             controls.dispose();
 
-            trajectoryMeshes.forEach(mesh => {
-                mesh.geometry.dispose();
-                (mesh.material as THREE.Material).dispose();
-            });
-            particleMeshes.forEach(mesh => {
-                mesh.geometry.dispose();
-                (mesh.material as THREE.Material).dispose();
-            });
+            clearTrajectories();
 
             renderer.dispose();
             container.removeChild(renderer.domElement);

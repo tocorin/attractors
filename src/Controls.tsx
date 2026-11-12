@@ -4,15 +4,20 @@ import { useSettingsStore, type GridPlane } from "./store";
 export default function Controls() {
     const grids = useSettingsStore((state) => state.grids);
     const toggleGrid = useSettingsStore((state) => state.toggleGrid);
+    const system = useSettingsStore((state) => state.system);
+    const setSystem = useSettingsStore((state) => state.setSystem);
 
     return (
       <div id="controls">
         <h3>🎛️ Ручки</h3>
         <label htmlFor="system-select">Система:</label>
-        <select id="system-select">
+        <select
+          id="system-select"
+          value={system}
+          onChange={(e) => setSystem(e.target.value)}
+        >
           <option value="lorenz">Лоренц (хаос)</option>
           <option value="rossler">Рёсслер</option>
-          <option value="custom">Своя (в коде)</option>
         </select>
         <label>σ (sigma):</label>
         <input type="number" id="sigma" value="10" step="0.1" />
