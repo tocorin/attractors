@@ -1,14 +1,16 @@
-import React from "react";
+import { useState } from "react";
 import { useSettingsStore, type GridPlane } from "./store";
 import { getParameterDescriptors } from "./attractors";
 
 export default function Controls() {
-    const grids = useSettingsStore((state) => state.grids);
-    const toggleGrid = useSettingsStore((state) => state.toggleGrid);
+    const [collapsed, setCollapsed] = useState(false);
+
     const system = useSettingsStore((state) => state.system);
     const setSystem = useSettingsStore((state) => state.setSystem);
     const params = useSettingsStore((state) => state.params);
     const setParam = useSettingsStore((state) => state.setParam);
+    const grids = useSettingsStore((state) => state.grids);
+    const toggleGrid = useSettingsStore((state) => state.toggleGrid);
     const animationSpeed = useSettingsStore((state) => state.animationSpeed);
     const setAnimationSpeed = useSettingsStore((state) => state.setAnimationSpeed);
     const particleSize = useSettingsStore((state) => state.particleSize);
@@ -18,85 +20,119 @@ export default function Controls() {
 
     return (
       <div id="controls">
-        <h3>🎛️ Ручки</h3>
-        <label htmlFor="system-select">Система:</label>
-        <select
-          id="system-select"
-          value={system}
-          onChange={(e) => setSystem(e.target.value)}
-        >
-          <option value="lorenz">Лоренц (хаос)</option>
-          <option value="rossler">Рёсслер</option>
-        </select>
-        {getParameterDescriptors(system).map((p) => (
-          <React.Fragment key={p.key}>
-            <label htmlFor={`param-${p.key}`}>{p.label}:</label>
-            <input
-              type="number"
-              id={`param-${p.key}`}
-              value={params[p.key] ?? p.default}
-              step={p.step ?? 0.1}
-              min={p.min}
-              onChange={(e) => {
-                const value = parseFloat(e.target.value);
-                if (!isNaN(value)) setParam(p.key, value);
-              }}
-            />
-          </React.Fragment>
-        ))}
+        <div className="panel-header">
+          <h3>🎛️ Ручки</h3>
+          <button
+            type="button"
+            className="panel-toggle"
+            onClick={() => setCollapsed((prev) => !prev)}
+            aria-label={collapsed ? "Развернуть панель" : "Свернуть панель"}
+          >
+            {collapsed ? "▸" : "▾"}
+          </button>
+        </div>
 
-        <h4>Сетки</h4>
-        {(['xy', 'yz', 'xz'] as GridPlane[]).map((plane) => (
-          <label key={plane}>
-            <input
-              type="checkbox"
-              id={`grid-${plane}`}
-              checked={grids[plane]}
-              onChange={() => toggleGrid(plane)}
-            /> {plane.toUpperCase()}
-          </label>
-        ))}
+        {!collapsed && (
+          <div className="panel-body">
+            <section>
+              <h4>Система</h4>
+              <div className="control-row">
+                <label htmlFor="system-select">Система:</label>
+                <select
+                  id="system-select"
+                  value={system}
+                  onChange={(e) => setSystem(e.target.value)}
+                >
+                  <option value="lorenz">Лоренц (хаос)</option>
+                  <option value="rossler">Рёсслер</option>
+                </select>
+              </div>
+              {getParameterDescriptors(system).map((p) => (
+                <div className="control-row" key={p.key}>
+                  <label htmlFor={`param-${p.key}`}>{p.label}</label>
+                  <input
+                    type="number"
+                    id={`param-${p.key}`}
+                    value={params[p.key] ?? p.default}
+                    step={p.step ?? 0.1}
+                    min={p.min}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value);
+                      if (!isNaN(value)) setParam(p.key, value);
+                    }}
+                  />
+                </div>
+              ))}
+            </section>
 
-        <h4>Вид</h4>
-        <label htmlFor="animation-speed">Скорость анимации:</label>
-        <input
-          type="number"
-          id="animation-speed"
-          value={animationSpeed}
-          step="0.25"
-          min="0"
-          max="5"
-          onChange={(e) => {
-            const value = parseFloat(e.target.value);
-            if (!isNaN(value)) setAnimationSpeed(value);
-          }}
-        />
+            <section>
+              <h4>Сетки</h4>
+              <div className="checkbox-row">
+                {(["xy", "yz", "xz"] as GridPlane[]).map((plane) => (
+                  <label key={plane}>
+                    <input
+                      type="checkbox"
+                      id={`grid-${plane}`}
+                      checked={grids[plane]}
+                      onChange={() => toggleGrid(plane)}
+                    /> {plane.toUpperCase()}
+                  </label>
+                ))}
+              </div>
+            </section>
 
-        <label htmlFor="particle-size">Размер частиц:</label>
-        <input
-          type="number"
-          id="particle-size"
-          value={particleSize}
-          step="0.05"
-          min="0.05"
-          onChange={(e) => {
-            const value = parseFloat(e.target.value);
-            if (!isNaN(value)) setParticleSize(value);
-          }}
-        />
+            <section>
+              <h4>Вид</h4>
+              <div className="control-row">
+                <label htmlFor="animation-speed">Скорость анимации</label>
+                <div className="slider-row">
+                  <input
+                    type="range"
+                    id="animation-speed"
+                    min="0"
+                    max="5"
+                    step="0.25"
+                    value={animationSpeed}
+                    onChange={(e) => setAnimationSpeed(parseFloat(e.target.value))}
+                  />
+                  <span className="value-badge">{animationSpeed}</span>
+                </div>
+              </div>
 
-        <label htmlFor="particle-count">Количество частиц:</label>
-        <input
-          type="number"
-          id="particle-count"
-          value={particleCount}
-          step="10"
-          min="0"
-          onChange={(e) => {
-            const value = parseInt(e.target.value, 10);
-            if (!isNaN(value)) setParticleCount(value);
-          }}
-        />
+              <div className="control-row">
+                <label htmlFor="particle-size">Размер частиц</label>
+                <div className="slider-row">
+                  <input
+                    type="range"
+                    id="particle-size"
+                    min="0.05"
+                    max="1.5"
+                    step="0.05"
+                    value={particleSize}
+                    onChange={(e) => setParticleSize(parseFloat(e.target.value))}
+                  />
+                  <span className="value-badge">{particleSize.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="control-row">
+                <label htmlFor="particle-count">Количество частиц</label>
+                <div className="slider-row">
+                  <input
+                    type="range"
+                    id="particle-count"
+                    min="0"
+                    max="500"
+                    step="10"
+                    value={particleCount}
+                    onChange={(e) => setParticleCount(parseInt(e.target.value, 10))}
+                  />
+                  <span className="value-badge">{particleCount}</span>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
       </div>
     );
 }
