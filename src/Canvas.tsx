@@ -11,8 +11,7 @@ const COLORS = [
     0xaa00ff, 0xff00aa, 0x00ffff, 0xffff00
 ];
 
-const PARTICLE_SPEED = 2;
-const PARTICLES_PER_TRAJECTORY = 100;
+const PARTICLE_BASE_SIZE = 0.35;
 
 function createTrajectoryLine(points: c3d[], color: number): THREE.Line {
     const geometry = new THREE.BufferGeometry();
@@ -36,15 +35,17 @@ function createTrajectoryLine(points: c3d[], color: number): THREE.Line {
     return new THREE.Line(geometry, material);
 }
 
-function createMovingParticle(color: number): THREE.Mesh {
-    const geometry = new THREE.SphereGeometry(0.35, 16, 16);
+function createMovingParticle(color: number, size: number): THREE.Mesh {
+    const geometry = new THREE.SphereGeometry(PARTICLE_BASE_SIZE, 16, 16);
     const material = new THREE.MeshStandardMaterial({
         color,
         emissive: color,
         emissiveIntensity: 0.2
     });
 
-    return new THREE.Mesh(geometry, material);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.scale.setScalar(size / PARTICLE_BASE_SIZE);
+    return mesh;
 }
 
 export default function Canvas() {
@@ -148,6 +149,8 @@ export default function Canvas() {
             const { derivative: derivativeFn, integration, initialConditions } = config;
             const { timeSpan, dt } = integration;
             const params = { ...getDefaultParams(systemName), ...paramValues };
+            const particleCount = useSettingsStore.getState().particleCount;
+            const particleSize = useSettingsStore.getState().particleSize;
 
             initialConditions.forEach((ic, idx) => {
                 const points = rk4(derivativeFn, ic, [0, timeSpan], dt, params);
@@ -159,8 +162,8 @@ export default function Canvas() {
                 scene.add(line);
                 trajectoryMeshes.push(line);
 
-                for (let i = 0; i < PARTICLES_PER_TRAJECTORY; i++) {
-                    const particle = createMovingParticle(color);
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = createMovingParticle(color, particleSize);
                     const randomFrame = Math.floor(Math.random() * points.length);
                     const point = points[randomFrame];
                     particle.position.set(point[0], point[1], point[2]);
@@ -178,8 +181,18 @@ export default function Canvas() {
             useSettingsStore.getState().params
         );
         const unsubscribeSystem = useSettingsStore.subscribe((state, prevState) => {
-            if (state.system !== prevState.system || state.params !== prevState.params) {
+            if (
+                state.system !== prevState.system ||
+                state.params !== prevState.params ||
+                state.particleCount !== prevState.particleCount
+            ) {
                 buildTrajectories(state.system, state.params);
+            }
+        });
+        const unsubscribeParticleSize = useSettingsStore.subscribe((state, prevState) => {
+            if (state.particleSize !== prevState.particleSize) {
+                const scale = state.particleSize / PARTICLE_BASE_SIZE;
+                particleMeshes.forEach(mesh => mesh.scale.setScalar(scale));
             }
         });
 
@@ -187,16 +200,18 @@ export default function Canvas() {
         function animate() {
             animationId = requestAnimationFrame(animate);
 
+            const speed = useSettingsStore.getState().animationSpeed;
+
             particleMeshes.forEach((mesh, idx) => {
                 const trajectory = trajectories[particleTrajectoryIndices[idx]];
                 if (!trajectory || trajectory.points.length === 0) {
                     return;
                 }
 
-                const frame = particleIndices[idx] % trajectory.points.length;
+                const frame = Math.floor(particleIndices[idx]) % trajectory.points.length;
                 const point = trajectory.points[frame];
                 mesh.position.set(point[0], point[1], point[2]);
-                particleIndices[idx] = (particleIndices[idx] + PARTICLE_SPEED) % trajectory.points.length;
+                particleIndices[idx] = (particleIndices[idx] + speed) % trajectory.points.length;
             });
 
             controls.update();
@@ -220,6 +235,7 @@ export default function Canvas() {
             window.removeEventListener('resize', onWindowResize);
             unsubscribeGrids();
             unsubscribeSystem();
+            unsubscribeParticleSize();
             controls.dispose();
 
             clearTrajectories();
