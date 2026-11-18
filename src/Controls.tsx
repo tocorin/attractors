@@ -9,6 +9,12 @@ export default function Controls() {
     const setSystem = useSettingsStore((state) => state.setSystem);
     const params = useSettingsStore((state) => state.params);
     const setParam = useSettingsStore((state) => state.setParam);
+    const animationSpeed = useSettingsStore((state) => state.animationSpeed);
+    const setAnimationSpeed = useSettingsStore((state) => state.setAnimationSpeed);
+    const particleSize = useSettingsStore((state) => state.particleSize);
+    const setParticleSize = useSettingsStore((state) => state.setParticleSize);
+    const particleCount = useSettingsStore((state) => state.particleCount);
+    const setParticleCount = useSettingsStore((state) => state.setParticleCount);
 
     return (
       <div id="controls">
@@ -53,13 +59,44 @@ export default function Controls() {
 
         <h4>Вид</h4>
         <label htmlFor="animation-speed">Скорость анимации:</label>
-        <input type="number" id="animation-speed" value="2" step="0.5" min="0" />
+        <input
+          type="number"
+          id="animation-speed"
+          value={animationSpeed}
+          step="0.25"
+          min="0"
+          max="5"
+          onChange={(e) => {
+            const value = parseFloat(e.target.value);
+            if (!isNaN(value)) setAnimationSpeed(value);
+          }}
+        />
 
         <label htmlFor="particle-size">Размер частиц:</label>
-        <input type="number" id="particle-size" value="0.35" step="0.05" min="0.05" />
+        <input
+          type="number"
+          id="particle-size"
+          value={particleSize}
+          step="0.05"
+          min="0.05"
+          onChange={(e) => {
+            const value = parseFloat(e.target.value);
+            if (!isNaN(value)) setParticleSize(value);
+          }}
+        />
 
         <label htmlFor="particle-count">Количество частиц:</label>
-        <input type="number" id="particle-count" value="100" step="10" min="0" />
+        <input
+          type="number"
+          id="particle-count"
+          value={particleCount}
+          step="10"
+          min="0"
+          onChange={(e) => {
+            const value = parseInt(e.target.value, 10);
+            if (!isNaN(value)) setParticleCount(value);
+          }}
+        />
       </div>
     );
 }
