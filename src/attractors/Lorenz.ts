@@ -24,14 +24,14 @@ export function registerLorenz(modules: System[]) {
             [1, 1, 1],
             [1.1, 1, 1],
             [-5, 0, 10],
-            [5, 5, 5]
+            [5, 5, 5],
         ],
         origin: [0, 0, 27],
         view: {
-            target: [0, 0, -3],
-            cameraPosition: [50, 40, 38]
+            target: [0.6, -0.56, -3.18],
+            cameraPosition: [-33.15, 46.64, 6.58],
         },
-        derivative: lorenz
-    }
+        derivative: lorenz,
+    };
     modules.push(system);
 }
