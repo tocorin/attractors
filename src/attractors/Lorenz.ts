@@ -26,9 +26,10 @@ export function registerLorenz(modules: System[]) {
             [-5, 0, 10],
             [5, 5, 5]
         ],
+        origin: [0, 0, 27],
         view: {
-            target: [0, 0, 24],
-            cameraPosition: [50, 40, 65]
+            target: [0, 0, -3],
+            cameraPosition: [50, 40, 38]
         },
         derivative: lorenz
     }

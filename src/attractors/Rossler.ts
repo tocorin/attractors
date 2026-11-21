@@ -26,6 +26,7 @@ export function registerRossler(modules: System[]) {
             [-5, 0, 10],
             [5, 5, 5]
         ],
+        origin: [0, 0, 0],
         view: {
             target: [0, 0, 4],
             cameraPosition: [25, 20, 30]

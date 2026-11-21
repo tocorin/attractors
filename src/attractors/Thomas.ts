@@ -24,6 +24,7 @@ export function registerThomas(modules: System[]) {
             [1.1, 0.1, 1.1],
             [0.1, 0.1, 0.1]
         ] as c3d[],
+        origin: [0, 0, 0],
         view: {
             target: [1.3, 1.3, 1.3],
             cameraPosition: [7, 6, 9]

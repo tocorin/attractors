@@ -1,14 +1,33 @@
 import { useState } from "react";
 import { useSettingsStore, type GridPlane } from "./store";
 import { getParameterDescriptors } from "./attractors";
+import type { c3d } from "./types";
 
 function formatVec(v: [number, number, number]): string {
     return `[${v.join(", ")}]`;
 }
 
+function copyToClipboard(text: string, onDone: () => void) {
+    const fallbackCopy = () => {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        onDone();
+    };
+    if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text).then(onDone).catch(fallbackCopy);
+    } else {
+        fallbackCopy();
+    }
+}
+
 export default function Controls() {
     const [collapsed, setCollapsed] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [originCopied, setOriginCopied] = useState(false);
 
     const system = useSettingsStore((state) => state.system);
     const setSystem = useSettingsStore((state) => state.setSystem);
@@ -28,6 +47,14 @@ export default function Controls() {
     const setParticleCount = useSettingsStore((state) => state.setParticleCount);
     const cameraPosition = useSettingsStore((state) => state.cameraPosition);
     const cameraTarget = useSettingsStore((state) => state.cameraTarget);
+    const origin = useSettingsStore((state) => state.origin);
+    const setOrigin = useSettingsStore((state) => state.setOrigin);
+
+    const updateOriginAxis = (axis: 0 | 1 | 2, value: number) => {
+        const next: c3d = [...origin];
+        next[axis] = value;
+        setOrigin(next);
+    };
 
     return (
       <div id="controls">
@@ -91,28 +118,48 @@ export default function Controls() {
                     type="button"
                     className="copy-button"
                     onClick={() => {
-                      const text = `view: {\n    target: ${formatVec(cameraTarget)},\n    cameraPosition: ${formatVec(cameraPosition)}\n},`;
                       const markCopied = () => {
                         setCopied(true);
                         setTimeout(() => setCopied(false), 1500);
                       };
-                      const fallbackCopy = () => {
-                        const textarea = document.createElement("textarea");
-                        textarea.value = text;
-                        document.body.appendChild(textarea);
-                        textarea.select();
-                        document.execCommand("copy");
-                        document.body.removeChild(textarea);
-                        markCopied();
-                      };
-                      if (navigator.clipboard?.writeText) {
-                        navigator.clipboard.writeText(text).then(markCopied).catch(fallbackCopy);
-                      } else {
-                        fallbackCopy();
-                      }
+                      copyToClipboard(
+                        `view: {\n    target: ${formatVec(cameraTarget)},\n    cameraPosition: ${formatVec(cameraPosition)}\n},`,
+                        markCopied
+                      );
                     }}
                   >
                     {copied ? "Скопировано" : "Копировать view"}
+                  </button>
+                </div>
+                <div className="view-info">
+                  <h4>Смещение (origin)</h4>
+                  {([0, 1, 2] as const).map((axis) => (
+                    <div className="control-row" key={axis}>
+                      <label htmlFor={`origin-${axis}`}>{"xyz"[axis]}:</label>
+                      <input
+                        type="number"
+                        id={`origin-${axis}`}
+                        value={origin[axis]}
+                        step={0.1}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value);
+                          if (!isNaN(value)) updateOriginAxis(axis, value);
+                        }}
+                      />
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="copy-button"
+                    onClick={() => {
+                      const markCopied = () => {
+                        setOriginCopied(true);
+                        setTimeout(() => setOriginCopied(false), 1500);
+                      };
+                      copyToClipboard(`origin: ${formatVec(origin)},`, markCopied);
+                    }}
+                  >
+                    {originCopied ? "Скопировано" : "Копировать origin"}
                   </button>
                 </div>
               </>

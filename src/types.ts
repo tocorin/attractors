@@ -23,6 +23,7 @@ export type System = {
     parameters: ParameterDescriptor[];
     integration: IntegrationSettings;
     initialConditions: c3d[];
+    origin: c3d;
     view: ViewSettings;
     derivative: df;
 };

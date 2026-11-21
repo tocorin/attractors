@@ -15,8 +15,10 @@ interface SettingsState {
     particleCount: number;
     cameraPosition: c3d;
     cameraTarget: c3d;
+    origin: c3d;
     setSystem: (system: string) => void;
     setParam: (key: string, value: number) => void;
+    setOrigin: (origin: c3d) => void;
     toggleGrid: (plane: GridPlane) => void;
     setGridSize: (size: number) => void;
     setGridStep: (step: number) => void;
@@ -28,6 +30,7 @@ interface SettingsState {
 
 const DEFAULT_SYSTEM = "lorenz";
 const DEFAULT_VIEW = getSystemConfig(DEFAULT_SYSTEM)!.view;
+const DEFAULT_ORIGIN = getSystemConfig(DEFAULT_SYSTEM)!.origin;
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -42,9 +45,15 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     particleCount: 100,
     cameraPosition: DEFAULT_VIEW.cameraPosition,
     cameraTarget: DEFAULT_VIEW.target,
-    setSystem: (system) => set({ system, params: getDefaultParams(system) }),
+    origin: DEFAULT_ORIGIN,
+    setSystem: (system) => set({
+        system,
+        params: getDefaultParams(system),
+        origin: getSystemConfig(system)?.origin ?? [0, 0, 0],
+    }),
     setParam: (key, value) =>
         set((state) => ({ params: { ...state.params, [key]: value } })),
+    setOrigin: (origin) => set({ origin }),
     toggleGrid: (plane) =>
         set((state) => ({ grids: { ...state.grids, [plane]: !state.grids[plane] } })),
     setGridSize: (size) => set({ gridSize: size }),

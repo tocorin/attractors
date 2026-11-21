@@ -26,9 +26,10 @@ export function registerChen(modules: System[]) {
             [5, 5, 20],
             [-5, -5, 20]
         ],
+        origin: [0, 0, 24],
         view: {
-            target: [0, 0, 25],
-            cameraPosition: [55, 45, 70]
+            target: [0, 0, 1],
+            cameraPosition: [55, 45, 46]
         },
         derivative: chen
     }

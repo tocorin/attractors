@@ -184,9 +184,15 @@ export default function Canvas() {
             const params = { ...getDefaultParams(systemName), ...paramValues };
             const particleCount = useSettingsStore.getState().particleCount;
             const particleSize = useSettingsStore.getState().particleSize;
+            const origin = useSettingsStore.getState().origin;
 
             initialConditions.forEach((ic, idx) => {
-                const points = rk4(derivativeFn, ic, [0, timeSpan], dt, params);
+                const rawPoints = rk4(derivativeFn, ic, [0, timeSpan], dt, params);
+                const points: c3d[] = rawPoints.map(([x, y, z]) => [
+                    x - origin[0],
+                    y - origin[1],
+                    z - origin[2]
+                ]);
                 const color = COLORS[idx % COLORS.length];
 
                 trajectories.push({ points, color, initial: ic });
@@ -232,7 +238,8 @@ export default function Canvas() {
             if (
                 state.system !== prevState.system ||
                 state.params !== prevState.params ||
-                state.particleCount !== prevState.particleCount
+                state.particleCount !== prevState.particleCount ||
+                state.origin !== prevState.origin
             ) {
                 buildTrajectories(state.system, state.params);
             }
