@@ -94,29 +94,49 @@ export default function Canvas() {
         scene.add(axesHelper);
 
         // Гриды по плоскостям XY, YZ, XZ (серый, прозрачность 75%)
-        const createGrid = () => {
-            const grid = new THREE.GridHelper(60, 60, 0x808080, 0x808080);
+        const createGrid = (size: number, divisions: number) => {
+            const grid = new THREE.GridHelper(size, divisions, 0x808080, 0x808080);
             (grid.material as THREE.Material).transparent = true;
             (grid.material as THREE.Material).opacity = 0.25;
             return grid;
         };
 
         // GridHelper по умолчанию лежит в плоскости XZ
-        const gridXY = createGrid();
-        gridXY.rotation.x = Math.PI / 2;
-        const gridYZ = createGrid();
-        gridYZ.rotation.z = Math.PI / 2;
-        const gridXZ = createGrid();
+        let grids: Record<string, THREE.GridHelper> = {};
+        const buildGrids = (size: number, step: number) => {
+            Object.values(grids).forEach(grid => {
+                scene.remove(grid);
+                grid.geometry.dispose();
+                (grid.material as THREE.Material).dispose();
+            });
 
-        const grids: Record<string, THREE.GridHelper> = { xy: gridXY, yz: gridYZ, xz: gridXZ };
+            const divisions = Math.max(1, Math.round(size / step));
+            const gridXY = createGrid(size, divisions);
+            gridXY.rotation.x = Math.PI / 2;
+            const gridYZ = createGrid(size, divisions);
+            gridYZ.rotation.z = Math.PI / 2;
+            const gridXZ = createGrid(size, divisions);
+
+            grids = { xy: gridXY, yz: gridYZ, xz: gridXZ };
+            scene.add(gridXY, gridYZ, gridXZ);
+        };
+
         const syncGrids = (gridsState: Record<string, boolean>) => {
             Object.entries(grids).forEach(([plane, grid]) => {
                 grid.visible = !!gridsState[plane];
             });
         };
+        buildGrids(
+            useSettingsStore.getState().gridSize,
+            useSettingsStore.getState().gridStep
+        );
         syncGrids(useSettingsStore.getState().grids);
-        const unsubscribeGrids = useSettingsStore.subscribe((state) => syncGrids(state.grids));
-        scene.add(gridXY, gridYZ, gridXZ);
+        const unsubscribeGrids = useSettingsStore.subscribe((state, prevState) => {
+            if (state.gridSize !== prevState.gridSize || state.gridStep !== prevState.gridStep) {
+                buildGrids(state.gridSize, state.gridStep);
+            }
+            syncGrids(state.grids);
+        });
 
         // Свет
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);

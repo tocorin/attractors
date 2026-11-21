@@ -8,6 +8,8 @@ interface SettingsState {
     system: string;
     params: SystemParameters;
     grids: Record<GridPlane, boolean>;
+    gridSize: number;
+    gridStep: number;
     animationSpeed: number;
     particleSize: number;
     particleCount: number;
@@ -16,6 +18,8 @@ interface SettingsState {
     setSystem: (system: string) => void;
     setParam: (key: string, value: number) => void;
     toggleGrid: (plane: GridPlane) => void;
+    setGridSize: (size: number) => void;
+    setGridStep: (step: number) => void;
     setAnimationSpeed: (speed: number) => void;
     setParticleSize: (size: number) => void;
     setParticleCount: (count: number) => void;
@@ -31,6 +35,8 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     system: DEFAULT_SYSTEM,
     params: getDefaultParams(DEFAULT_SYSTEM),
     grids: { xy: true, yz: false, xz: false },
+    gridSize: 60,
+    gridStep: 1,
     animationSpeed: 2,
     particleSize: 0.35,
     particleCount: 100,
@@ -41,6 +47,8 @@ export const useSettingsStore = create<SettingsState>((set) => ({
         set((state) => ({ params: { ...state.params, [key]: value } })),
     toggleGrid: (plane) =>
         set((state) => ({ grids: { ...state.grids, [plane]: !state.grids[plane] } })),
+    setGridSize: (size) => set({ gridSize: size }),
+    setGridStep: (step) => set({ gridStep: step }),
     setAnimationSpeed: (speed) => set({ animationSpeed: speed }),
     setParticleSize: (size) => set({ particleSize: size }),
     setParticleCount: (count) => set({ particleCount: count }),

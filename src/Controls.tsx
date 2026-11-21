@@ -16,6 +16,10 @@ export default function Controls() {
     const setParam = useSettingsStore((state) => state.setParam);
     const grids = useSettingsStore((state) => state.grids);
     const toggleGrid = useSettingsStore((state) => state.toggleGrid);
+    const gridSize = useSettingsStore((state) => state.gridSize);
+    const setGridSize = useSettingsStore((state) => state.setGridSize);
+    const gridStep = useSettingsStore((state) => state.gridStep);
+    const setGridStep = useSettingsStore((state) => state.setGridStep);
     const animationSpeed = useSettingsStore((state) => state.animationSpeed);
     const setAnimationSpeed = useSettingsStore((state) => state.setAnimationSpeed);
     const particleSize = useSettingsStore((state) => state.particleSize);
@@ -126,6 +130,36 @@ export default function Controls() {
                     /> {plane.toUpperCase()}
                   </label>
                 ))}
+              </div>
+              <div className="control-row">
+                <label htmlFor="grid-size">Размер грида</label>
+                <div className="slider-row">
+                  <input
+                    type="range"
+                    id="grid-size"
+                    min="10"
+                    max="200"
+                    step="10"
+                    value={gridSize}
+                    onChange={(e) => setGridSize(parseInt(e.target.value, 10))}
+                  />
+                  <span className="value-badge">{gridSize}</span>
+                </div>
+              </div>
+              <div className="control-row">
+                <label htmlFor="grid-step">Шаг сетки</label>
+                <div className="slider-row">
+                  <input
+                    type="range"
+                    id="grid-step"
+                    min="0.5"
+                    max="20"
+                    step="0.5"
+                    value={gridStep}
+                    onChange={(e) => setGridStep(parseFloat(e.target.value))}
+                  />
+                  <span className="value-badge">{gridStep}</span>
+                </div>
               </div>
             </section>
 
