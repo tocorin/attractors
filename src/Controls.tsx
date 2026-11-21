@@ -2,8 +2,13 @@ import { useState } from "react";
 import { useSettingsStore, type GridPlane } from "./store";
 import { getParameterDescriptors } from "./attractors";
 
+function formatVec(v: [number, number, number]): string {
+    return `[${v.join(", ")}]`;
+}
+
 export default function Controls() {
     const [collapsed, setCollapsed] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const system = useSettingsStore((state) => state.system);
     const setSystem = useSettingsStore((state) => state.setSystem);
@@ -17,6 +22,8 @@ export default function Controls() {
     const setParticleSize = useSettingsStore((state) => state.setParticleSize);
     const particleCount = useSettingsStore((state) => state.particleCount);
     const setParticleCount = useSettingsStore((state) => state.setParticleCount);
+    const cameraPosition = useSettingsStore((state) => state.cameraPosition);
+    const cameraTarget = useSettingsStore((state) => state.cameraTarget);
 
     return (
       <div id="controls">
@@ -64,6 +71,46 @@ export default function Controls() {
                   />
                 </div>
               ))}
+              <>
+                <div className="view-info">
+                  <h4>Ракурс (текущий)</h4>
+                  <div className="view-row">
+                    <span>target:</span>
+                    <code>{formatVec(cameraTarget)}</code>
+                  </div>
+                  <div className="view-row">
+                    <span>camera:</span>
+                    <code>{formatVec(cameraPosition)}</code>
+                  </div>
+                  <button
+                    type="button"
+                    className="copy-button"
+                    onClick={() => {
+                      const text = `view: {\n    target: ${formatVec(cameraTarget)},\n    cameraPosition: ${formatVec(cameraPosition)}\n},`;
+                      const markCopied = () => {
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 1500);
+                      };
+                      const fallbackCopy = () => {
+                        const textarea = document.createElement("textarea");
+                        textarea.value = text;
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(textarea);
+                        markCopied();
+                      };
+                      if (navigator.clipboard?.writeText) {
+                        navigator.clipboard.writeText(text).then(markCopied).catch(fallbackCopy);
+                      } else {
+                        fallbackCopy();
+                      }
+                    }}
+                  >
+                    {copied ? "Скопировано" : "Копировать view"}
+                  </button>
+                </div>
+              </>
             </section>
 
             <section>

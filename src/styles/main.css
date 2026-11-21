@@ -125,3 +125,35 @@ body {
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
+
+#controls .view-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+#controls .view-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 13px;
+}
+
+#controls .view-row code {
+    font-family: monospace;
+}
+
+#controls .copy-button {
+    margin-top: 4px;
+    padding: 4px 8px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    background: transparent;
+    color: white;
+    cursor: pointer;
+}
+
+#controls .copy-button:hover {
+    background: rgba(255,255,255,0.1);
+}

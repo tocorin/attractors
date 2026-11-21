@@ -74,6 +74,21 @@ export default function Canvas() {
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
 
+        // Синхронизация положения камеры в стор (для панели)
+        let lastPoseSync = 0;
+        const syncCameraPose = () => {
+            const now = performance.now();
+            if (now - lastPoseSync < 100) {
+                return;
+            }
+            lastPoseSync = now;
+            useSettingsStore.getState().setCameraPose(
+                [camera.position.x, camera.position.y, camera.position.z],
+                [controls.target.x, controls.target.y, controls.target.z]
+            );
+        };
+        controls.addEventListener('change', syncCameraPose);
+
         // Оси координат
         const axesHelper = new THREE.AxesHelper(30);
         scene.add(axesHelper);
