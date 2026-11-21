@@ -179,15 +179,11 @@ export default function Canvas() {
                 return;
             }
 
-            const { derivative: derivativeFn, integration, initialConditions, view } = config;
+            const { derivative: derivativeFn, integration, initialConditions } = config;
             const { timeSpan, dt } = integration;
             const params = { ...getDefaultParams(systemName), ...paramValues };
             const particleCount = useSettingsStore.getState().particleCount;
             const particleSize = useSettingsStore.getState().particleSize;
-
-            camera.position.set(...view.cameraPosition);
-            controls.target.set(...view.target);
-            controls.update();
 
             initialConditions.forEach((ic, idx) => {
                 const points = rk4(derivativeFn, ic, [0, timeSpan], dt, params);
@@ -213,11 +209,26 @@ export default function Canvas() {
             });
         };
 
+        // Ракурс применяется только при смене системы, не при изменении параметров
+        const applyView = (systemName: string) => {
+            const view = getSystemConfig(systemName)?.view;
+            if (!view) {
+                return;
+            }
+            camera.position.set(...view.cameraPosition);
+            controls.target.set(...view.target);
+            controls.update();
+        };
+
+        applyView(useSettingsStore.getState().system);
         buildTrajectories(
             useSettingsStore.getState().system,
             useSettingsStore.getState().params
         );
         const unsubscribeSystem = useSettingsStore.subscribe((state, prevState) => {
+            if (state.system !== prevState.system) {
+                applyView(state.system);
+            }
             if (
                 state.system !== prevState.system ||
                 state.params !== prevState.params ||
