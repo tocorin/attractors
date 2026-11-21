@@ -16,9 +16,13 @@ interface SettingsState {
     cameraPosition: c3d;
     cameraTarget: c3d;
     origin: c3d;
+    colors: string[];
     setSystem: (system: string) => void;
     setParam: (key: string, value: number) => void;
     setOrigin: (origin: c3d) => void;
+    addColor: () => void;
+    removeColor: (index: number) => void;
+    setColor: (index: number, color: string) => void;
     toggleGrid: (plane: GridPlane) => void;
     setGridSize: (size: number) => void;
     setGridStep: (step: number) => void;
@@ -34,6 +38,11 @@ const DEFAULT_ORIGIN = getSystemConfig(DEFAULT_SYSTEM)!.origin;
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+const DEFAULT_COLORS = [
+    "#0088ff", "#ff4444", "#00ff88", "#ffaa00",
+    "#aa00ff", "#ff00aa", "#00ffff", "#ffff00",
+];
+
 export const useSettingsStore = create<SettingsState>((set) => ({
     system: DEFAULT_SYSTEM,
     params: getDefaultParams(DEFAULT_SYSTEM),
@@ -46,6 +55,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     cameraPosition: DEFAULT_VIEW.cameraPosition,
     cameraTarget: DEFAULT_VIEW.target,
     origin: DEFAULT_ORIGIN,
+    colors: DEFAULT_COLORS,
     setSystem: (system) => set({
         system,
         params: getDefaultParams(system),
@@ -54,6 +64,23 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     setParam: (key, value) =>
         set((state) => ({ params: { ...state.params, [key]: value } })),
     setOrigin: (origin) => set({ origin }),
+    addColor: () =>
+        set((state) => ({
+            colors: [
+                ...state.colors,
+                `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0")}`,
+            ],
+        })),
+    removeColor: (index) =>
+        set((state) => ({
+            colors: state.colors.length > 1
+                ? state.colors.filter((_, i) => i !== index)
+                : state.colors,
+        })),
+    setColor: (index, color) =>
+        set((state) => ({
+            colors: state.colors.map((c, i) => (i === index ? color : c)),
+        })),
     toggleGrid: (plane) =>
         set((state) => ({ grids: { ...state.grids, [plane]: !state.grids[plane] } })),
     setGridSize: (size) => set({ gridSize: size }),

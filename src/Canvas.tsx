@@ -6,14 +6,9 @@ import { rk4 } from './attractors';
 import { getSystemConfig, getDefaultParams } from './attractors';
 import { useSettingsStore } from './store';
 
-const COLORS = [
-    0x0088ff, 0xff4444, 0x00ff88, 0xffaa00,
-    0xaa00ff, 0xff00aa, 0x00ffff, 0xffff00
-];
-
 const PARTICLE_BASE_SIZE = 0.35;
 
-function createTrajectoryLine(points: c3d[], color: number): THREE.Line {
+function createTrajectoryLine(points: c3d[], color: string): THREE.Line {
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(points.length * 3);
 
@@ -35,7 +30,7 @@ function createTrajectoryLine(points: c3d[], color: number): THREE.Line {
     return new THREE.Line(geometry, material);
 }
 
-function createMovingParticle(color: number, size: number): THREE.Mesh {
+function createMovingParticle(color: string, size: number): THREE.Mesh {
     const geometry = new THREE.SphereGeometry(PARTICLE_BASE_SIZE, 16, 16);
     const material = new THREE.MeshStandardMaterial({
         color,
@@ -185,6 +180,7 @@ export default function Canvas() {
             const particleCount = useSettingsStore.getState().particleCount;
             const particleSize = useSettingsStore.getState().particleSize;
             const origin = useSettingsStore.getState().origin;
+            const colors = useSettingsStore.getState().colors;
 
             initialConditions.forEach((ic, idx) => {
                 const rawPoints = rk4(derivativeFn, ic, [0, timeSpan], dt, params);
@@ -193,7 +189,7 @@ export default function Canvas() {
                     y - origin[1],
                     z - origin[2]
                 ]);
-                const color = COLORS[idx % COLORS.length];
+                const color = colors[idx % colors.length];
 
                 trajectories.push({ points, color, initial: ic });
 
@@ -250,6 +246,24 @@ export default function Canvas() {
                 particleMeshes.forEach(mesh => mesh.scale.setScalar(scale));
             }
         });
+        // Перекраска без перестроения: цвета меняются чаще, чем траектории
+        const applyColors = (colors: string[]) => {
+            trajectoryMeshes.forEach((mesh, i) => {
+                (mesh.material as THREE.LineBasicMaterial)
+                    .color.set(colors[i % colors.length]);
+            });
+            particleMeshes.forEach((mesh, p) => {
+                const tIdx = particleTrajectoryIndices[p];
+                const material = mesh.material as THREE.MeshStandardMaterial;
+                material.color.set(colors[tIdx % colors.length]);
+                material.emissive.set(colors[tIdx % colors.length]);
+            });
+        };
+        const unsubscribeColors = useSettingsStore.subscribe((state, prevState) => {
+            if (state.colors !== prevState.colors) {
+                applyColors(state.colors);
+            }
+        });
 
         // Цикл рендеринга
         function animate() {
@@ -291,6 +305,7 @@ export default function Canvas() {
             unsubscribeGrids();
             unsubscribeSystem();
             unsubscribeParticleSize();
+            unsubscribeColors();
             controls.dispose();
 
             clearTrajectories();

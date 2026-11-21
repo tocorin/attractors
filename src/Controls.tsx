@@ -28,6 +28,7 @@ export default function Controls() {
     const [collapsed, setCollapsed] = useState(false);
     const [copied, setCopied] = useState(false);
     const [originCopied, setOriginCopied] = useState(false);
+    const [colorsCollapsed, setColorsCollapsed] = useState(true);
 
     const system = useSettingsStore((state) => state.system);
     const setSystem = useSettingsStore((state) => state.setSystem);
@@ -49,6 +50,10 @@ export default function Controls() {
     const cameraTarget = useSettingsStore((state) => state.cameraTarget);
     const origin = useSettingsStore((state) => state.origin);
     const setOrigin = useSettingsStore((state) => state.setOrigin);
+    const colors = useSettingsStore((state) => state.colors);
+    const addColor = useSettingsStore((state) => state.addColor);
+    const removeColor = useSettingsStore((state) => state.removeColor);
+    const setColor = useSettingsStore((state) => state.setColor);
 
     const updateOriginAxis = (axis: 0 | 1 | 2, value: number) => {
         const next: c3d = [...origin];
@@ -260,6 +265,51 @@ export default function Controls() {
                   <span className="value-badge">{particleCount}</span>
                 </div>
               </div>
+            </section>
+
+            <section>
+              <div
+                className="section-header"
+                role="button"
+                tabIndex={0}
+                aria-expanded={!colorsCollapsed}
+                aria-label={colorsCollapsed ? "Развернуть цвета" : "Свернуть цвета"}
+                onClick={() => setColorsCollapsed((prev) => !prev)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setColorsCollapsed((prev) => !prev);
+                  }
+                }}
+              >
+                <h4>Цвета</h4>
+                <span aria-hidden="true">{colorsCollapsed ? "▸" : "▾"}</span>
+              </div>
+              {!colorsCollapsed && (
+                <>
+                  {colors.map((color, index) => (
+                    <div className="color-row" key={index}>
+                      <input
+                        type="color"
+                        value={color}
+                        onChange={(e) => setColor(index, e.target.value)}
+                      />
+                      <code>{color}</code>
+                      <button
+                        type="button"
+                        onClick={() => removeColor(index)}
+                        disabled={colors.length <= 1}
+                        aria-label={`Удалить цвет ${color}`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" className="copy-button" onClick={addColor}>
+                    Добавить цвет
+                  </button>
+                </>
+              )}
             </section>
           </div>
         )}

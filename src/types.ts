@@ -10,7 +10,7 @@ export type df = (t: number, state: c3d, parameters?: any) => c3d;
 
 export interface Trajectory {
     points: c3d[];
-    color: number;
+    color: string;
     initial: c3d;
 }
 
