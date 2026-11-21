@@ -11,6 +11,7 @@
 - work on exactly one task at a time; if the user starts another task, remind them of the current one
 - task lifecycle: implement -> npx tsc --noEmit && npx vite build -> visual check via dev server (localhost:3000/attractors/) -> strike through in TASKS.md -> commit with refs #t-<number>
 - do not close a task without the user's confirmation unless they explicitly approved it
+- no drive-by refactoring: if a task requires structural changes beyond its scope (new types, moving responsibilities, changing the architecture), propose them first and wait for approval, or suggest a separate refactoring task
 
 ## Architecture
 - attractor modules (src/attractors/) own everything: derivative, parameter descriptors (key, label, default, step, min), integration settings (timeSpan, dt), initial conditions
