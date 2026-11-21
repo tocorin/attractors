@@ -1,12 +1,36 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import type { c3d, Trajectory, SystemParameters } from './types';
 import { rk4 } from './attractors';
 import { getSystemConfig, getDefaultParams } from './attractors';
-import { useSettingsStore } from './store';
+import { useSettingsStore, type VisualProfile } from './store';
 
 const PARTICLE_BASE_SIZE = 0.35;
+// Масштаб спрайта относительно particleSize (квад спрайта в единицах сцены)
+const SPRITE_SCALE = 4;
+
+// Радиальный градиент для glow-спрайтов, общий для всех частиц
+let glowTexture: THREE.Texture | null = null;
+function getGlowTexture(): THREE.Texture {
+    if (!glowTexture) {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 64;
+        const ctx = canvas.getContext('2d')!;
+        const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+        gradient.addColorStop(0, 'rgba(255,255,255,1)');
+        gradient.addColorStop(0.35, 'rgba(255,255,255,0.5)');
+        gradient.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 64, 64);
+        glowTexture = new THREE.CanvasTexture(canvas);
+    }
+    return glowTexture;
+}
 
 function createTrajectoryLine(points: c3d[], color: string): THREE.Line {
     const geometry = new THREE.BufferGeometry();
@@ -30,7 +54,28 @@ function createTrajectoryLine(points: c3d[], color: string): THREE.Line {
     return new THREE.Line(geometry, material);
 }
 
-function createMovingParticle(color: string, size: number): THREE.Mesh {
+function applyParticleScale(obj: THREE.Object3D, size: number, profile: VisualProfile) {
+    if (profile === 'sprites') {
+        obj.scale.set(size * SPRITE_SCALE, size * SPRITE_SCALE, 1);
+    } else {
+        obj.scale.setScalar(size / PARTICLE_BASE_SIZE);
+    }
+}
+
+function createMovingParticle(profile: VisualProfile, color: string, size: number): THREE.Object3D {
+    if (profile === 'sprites') {
+        const material = new THREE.SpriteMaterial({
+            map: getGlowTexture(),
+            color,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            transparent: true,
+        });
+        const sprite = new THREE.Sprite(material);
+        applyParticleScale(sprite, size, profile);
+        return sprite;
+    }
+
     const geometry = new THREE.SphereGeometry(PARTICLE_BASE_SIZE, 16, 16);
     const material = new THREE.MeshStandardMaterial({
         color,
@@ -39,7 +84,7 @@ function createMovingParticle(color: string, size: number): THREE.Mesh {
     });
 
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.scale.setScalar(size / PARTICLE_BASE_SIZE);
+    applyParticleScale(mesh, size, profile);
     return mesh;
 }
 
@@ -63,6 +108,18 @@ export default function Canvas() {
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         container.appendChild(renderer.domElement);
+
+        // Постобработка для профиля 'sprites': свечение ярких областей
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            1.2,  // strength
+            0.4,  // radius
+            0.5   // threshold
+        );
+        composer.addPass(bloomPass);
+        composer.addPass(new OutputPass());
 
         // Контролы орбиты
         const controls = new OrbitControls(camera, renderer.domElement);
@@ -144,9 +201,19 @@ export default function Canvas() {
         // Симуляция
         const trajectories: Trajectory[] = [];
         const trajectoryMeshes: THREE.Line[] = [];
-        const particleMeshes: THREE.Mesh[] = [];
+        const particleMeshes: THREE.Object3D[] = [];
         const particleIndices: number[] = [];
         const particleTrajectoryIndices: number[] = [];
+
+        const disposeParticle = (obj: THREE.Object3D) => {
+            scene.remove(obj);
+            // у спрайтов геометрия общая (внутренняя у three) — не трогаем
+            if (obj instanceof THREE.Mesh) {
+                obj.geometry.dispose();
+            }
+            const material = (obj as THREE.Mesh | THREE.Sprite).material as THREE.Material;
+            material.dispose();
+        };
 
         const clearTrajectories = () => {
             trajectoryMeshes.forEach(mesh => {
@@ -154,11 +221,7 @@ export default function Canvas() {
                 mesh.geometry.dispose();
                 (mesh.material as THREE.Material).dispose();
             });
-            particleMeshes.forEach(mesh => {
-                scene.remove(mesh);
-                mesh.geometry.dispose();
-                (mesh.material as THREE.Material).dispose();
-            });
+            particleMeshes.forEach(disposeParticle);
             trajectories.length = 0;
             trajectoryMeshes.length = 0;
             particleMeshes.length = 0;
@@ -181,6 +244,7 @@ export default function Canvas() {
             const particleSize = useSettingsStore.getState().particleSize;
             const origin = useSettingsStore.getState().origin;
             const colors = useSettingsStore.getState().colors;
+            const profile = useSettingsStore.getState().visualProfile;
 
             initialConditions.forEach((ic, idx) => {
                 const rawPoints = rk4(derivativeFn, ic, [0, timeSpan], dt, params);
@@ -198,7 +262,7 @@ export default function Canvas() {
                 trajectoryMeshes.push(line);
 
                 for (let i = 0; i < particleCount; i++) {
-                    const particle = createMovingParticle(color, particleSize);
+                    const particle = createMovingParticle(profile, color, particleSize);
                     const randomFrame = Math.floor(Math.random() * points.length);
                     const point = points[randomFrame];
                     particle.position.set(point[0], point[1], point[2]);
@@ -235,15 +299,16 @@ export default function Canvas() {
                 state.system !== prevState.system ||
                 state.params !== prevState.params ||
                 state.particleCount !== prevState.particleCount ||
-                state.origin !== prevState.origin
+                state.origin !== prevState.origin ||
+                state.visualProfile !== prevState.visualProfile
             ) {
                 buildTrajectories(state.system, state.params);
             }
         });
         const unsubscribeParticleSize = useSettingsStore.subscribe((state, prevState) => {
             if (state.particleSize !== prevState.particleSize) {
-                const scale = state.particleSize / PARTICLE_BASE_SIZE;
-                particleMeshes.forEach(mesh => mesh.scale.setScalar(scale));
+                particleMeshes.forEach(mesh =>
+                    applyParticleScale(mesh, state.particleSize, state.visualProfile));
             }
         });
         // Перекраска без перестроения: цвета меняются чаще, чем траектории
@@ -254,9 +319,11 @@ export default function Canvas() {
             });
             particleMeshes.forEach((mesh, p) => {
                 const tIdx = particleTrajectoryIndices[p];
-                const material = mesh.material as THREE.MeshStandardMaterial;
+                const material = ((mesh as THREE.Mesh | THREE.Sprite).material) as THREE.MeshStandardMaterial | THREE.SpriteMaterial;
                 material.color.set(colors[tIdx % colors.length]);
-                material.emissive.set(colors[tIdx % colors.length]);
+                if (material instanceof THREE.MeshStandardMaterial) {
+                    material.emissive.set(colors[tIdx % colors.length]);
+                }
             });
         };
         const unsubscribeColors = useSettingsStore.subscribe((state, prevState) => {
@@ -284,13 +351,18 @@ export default function Canvas() {
             });
 
             controls.update();
-            renderer.render(scene, camera);
+            if (useSettingsStore.getState().visualProfile === 'sprites') {
+                composer.render();
+            } else {
+                renderer.render(scene, camera);
+            }
         }
 
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
         }
 
         window.addEventListener('resize', onWindowResize);
@@ -307,6 +379,7 @@ export default function Canvas() {
             unsubscribeParticleSize();
             unsubscribeColors();
             controls.dispose();
+            composer.dispose();
 
             clearTrajectories();
 

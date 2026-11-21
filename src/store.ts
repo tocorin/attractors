@@ -4,6 +4,8 @@ import { getDefaultParams, getSystemConfig } from './attractors';
 
 export type GridPlane = 'xy' | 'yz' | 'xz';
 
+export type VisualProfile = 'sprites' | 'spheres';
+
 interface SettingsState {
     system: string;
     params: SystemParameters;
@@ -17,12 +19,14 @@ interface SettingsState {
     cameraTarget: c3d;
     origin: c3d;
     colors: string[];
+    visualProfile: VisualProfile;
     setSystem: (system: string) => void;
     setParam: (key: string, value: number) => void;
     setOrigin: (origin: c3d) => void;
     addColor: () => void;
     removeColor: (index: number) => void;
     setColor: (index: number, color: string) => void;
+    setVisualProfile: (profile: VisualProfile) => void;
     toggleGrid: (plane: GridPlane) => void;
     setGridSize: (size: number) => void;
     setGridStep: (step: number) => void;
@@ -56,6 +60,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     cameraTarget: DEFAULT_VIEW.target,
     origin: DEFAULT_ORIGIN,
     colors: DEFAULT_COLORS,
+    visualProfile: "sprites",
     setSystem: (system) => set({
         system,
         params: getDefaultParams(system),
@@ -81,6 +86,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
         set((state) => ({
             colors: state.colors.map((c, i) => (i === index ? color : c)),
         })),
+    setVisualProfile: (profile) => set({ visualProfile: profile }),
     toggleGrid: (plane) =>
         set((state) => ({ grids: { ...state.grids, [plane]: !state.grids[plane] } })),
     setGridSize: (size) => set({ gridSize: size }),

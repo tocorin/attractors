@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSettingsStore, type GridPlane } from "./store";
+import { useSettingsStore, type GridPlane, type VisualProfile } from "./store";
 import { getParameterDescriptors } from "./attractors";
 import type { c3d } from "./types";
 
@@ -54,6 +54,8 @@ export default function Controls() {
     const addColor = useSettingsStore((state) => state.addColor);
     const removeColor = useSettingsStore((state) => state.removeColor);
     const setColor = useSettingsStore((state) => state.setColor);
+    const visualProfile = useSettingsStore((state) => state.visualProfile);
+    const setVisualProfile = useSettingsStore((state) => state.setVisualProfile);
 
     const updateOriginAxis = (axis: 0 | 1 | 2, value: number) => {
         const next: c3d = [...origin];
@@ -218,6 +220,17 @@ export default function Controls() {
 
             <section>
               <h4>Вид</h4>
+              <div className="control-row">
+                <label htmlFor="visual-profile">Профиль визуализации</label>
+                <select
+                  id="visual-profile"
+                  value={visualProfile}
+                  onChange={(e) => setVisualProfile(e.target.value as VisualProfile)}
+                >
+                  <option value="sprites">Спрайты + свечение</option>
+                  <option value="spheres">Шары</option>
+                </select>
+              </div>
               <div className="control-row">
                 <label htmlFor="animation-speed">Скорость анимации</label>
                 <div className="slider-row">
