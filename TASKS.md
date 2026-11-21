@@ -12,7 +12,7 @@
 ~~t-4-wire animation speed, particle size and count~~
 Поля «Скорость анимации», «Размер частиц», «Количество частиц» в Controls пока статичные. Подключить их к стору: скорость — в анимационный цикл Canvas (PARTICLE_SPEED), размер — в геометрию частиц (createMovingParticle), количество — пересоздание частиц при изменении. Константы PARTICLE_SPEED и PARTICLES_PER_TRAJECTORY убрать из Canvas.
 
-t-5-add thomas attractor
+~~t-5-add thomas attractor~~
 Реализовать аттрактор Томаса: ẋ=sin y−bx, ẏ=sin z−by, ż=sin x−bz, параметр b≈0.208. Модуль src/attractors/Thomas.ts с дескрипторами параметров, регистрация в index.ts, опция в селекте Controls. Проверить масштаб (амплитуда ~±4.5 по всем осям) против грида/камеры.
 
 t-6-add chen attractor

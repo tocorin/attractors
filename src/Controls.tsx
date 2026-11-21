@@ -45,6 +45,7 @@ export default function Controls() {
                 >
                   <option value="lorenz">Лоренц (хаос)</option>
                   <option value="rossler">Рёсслер</option>
+                  <option value="thomas">Томас</option>
                 </select>
               </div>
               {getParameterDescriptors(system).map((p) => (

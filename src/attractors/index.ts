@@ -1,12 +1,14 @@
 import { df, SystemParameters, System, ParameterDescriptor } from "../types";
 import { registerRossler } from "./Rossler";
 import { registerLorenz } from "./Lorenz";
+import { registerThomas } from "./Thomas";
 export { rk4 } from "./RungeKutta";
 
 const modules: System[] = [];
 
 registerRossler(modules);
 registerLorenz(modules);
+registerThomas(modules);
 
 export function getSystemConfig(name: string): System | undefined {
   return modules.find((m) => m.name === name);

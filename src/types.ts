@@ -23,7 +23,13 @@ export type System = {
     parameters: ParameterDescriptor[];
     integration: IntegrationSettings;
     initialConditions: c3d[];
+    view: ViewSettings;
     derivative: df;
+};
+
+export type ViewSettings = {
+    target: c3d;
+    cameraPosition: c3d;
 };
 
 export type ParameterDescriptor = {
